@@ -4,7 +4,7 @@
 
 **From a sentence to a stunning deck — live.**
 
-Slideflow is an open-source AI presentation studio. Describe an idea in plain language, watch slides stream in as they are written, edit any text inline, present fullscreen, and export to PDF or PowerPoint. Optional [Corsair](https://docs.corsair.dev) integrations ground decks in live web research and publish finished PDFs to Google Drive and Slack — with zero OAuth code in this repo.
+Slideflow is an open-source AI presentation studio. Describe an idea in plain language, watch slides stream in as they are written, edit any text inline, present fullscreen, and export to PDF or PowerPoint. Optional [Corsair](https://corsair.dev/) integrations ground decks in live web research, import source material from Google Drive, and publish finished PDFs back to Google Drive — with zero OAuth code in this repo.
 
 ---
 
@@ -35,7 +35,7 @@ Most AI slide tools either dump commands into Google Slides or return a static f
 | Design | Default template styling | **7 designer themes**, **10 layouts**, optional AI art |
 | Editing | Re-prompt from scratch | **Click any text to edit** inline |
 | Present | Open in another app | Built-in **fullscreen present mode** + speaker notes |
-| Export | Single format | **PDF & PPTX** locally; optional **Drive → Slack** via Corsair |
+| Export | Single format | **PDF & PPTX** locally; optional **publish to Google Drive** via Corsair |
 | Research | Manual copy-paste | Optional **live web research** before generation |
 
 The name reflects the core experience: slides **flow** into view one by one while you watch the narrative take shape.
@@ -68,7 +68,7 @@ The name reflects the core experience: slides **flow** into view one by one whil
 
 - **PDF** — client-side render via `html-to-image` + `jspdf` (pixel-perfect snapshots of the 1280×720 canvas).
 - **PPTX** — native editable PowerPoint via `pptxgenjs` (text-based, not screenshots).
-- **Publish & Share** (Corsair) — upload PDF to Google Drive, create a shareable link, post to Slack in one flow.
+- **Publish & Share** (Corsair) — upload PDF to Google Drive and create a shareable link in one flow.
 
 ---
 
@@ -166,7 +166,7 @@ Without this key, all slides use CSS gradient art — fully functional, zero ima
 
 ### Corsair (optional)
 
-Unlocks live research, Google Drive upload, and Slack sharing:
+Unlocks live research, Google Drive import, and Google Drive publishing:
 
 ```bash
 CORSAIR_DEV_KEY=ch_...
@@ -188,7 +188,7 @@ Powers the **Star the repo** header link on the landing page.
 
 ## Corsair integrations
 
-[Corsair](https://docs.corsair.dev) is the integration layer — not the product name. Slideflow uses the hosted SDK (`@corsair-dev/app`) via `tenant.run(...)` with no OAuth implementation in this repo.
+[Corsair](https://corsair.dev/) is the integration layer — not the product name. Slideflow uses the hosted SDK (`@corsair-dev/app`) via `tenant.run(...)` with no OAuth implementation in this repo.
 
 ### Live research
 
@@ -206,22 +206,29 @@ Research snippets are passed into the generation prompt so slides cite real numb
 
 ### Publish & Share
 
-Chains two integrations in one action:
-
 1. Render deck PDF in the browser
 2. Upload to **Google Drive** (`googledrive.api.files.upload`)
-3. Create a shareable link (`googledrive.api.files.share`)
-4. Post link to **Slack** (`slack.api.messages.post`)
+3. Create a shareable link (`googledrive.api.files.share`) and return it
 
 **API:** `POST /api/publish` · **Code:** `src/app/api/publish/route.ts`
+
+### Import from Drive
+
+The input-side mirror of research: ground a deck in your own document.
+
+1. Paste a Google Drive / Docs link in the composer
+2. Resolve the file id, fetch metadata (`googledrive.api.files.get`)
+3. Download the content (`googledrive.api.files.download`) and feed it to the generator
+
+**Code:** `src/lib/source.ts` (wired into `POST /api/generate`)
 
 ### Setup checklist
 
 1. Create an instance at [app.corsair.dev](https://app.corsair.dev/dashboard)
 2. Copy the **opaque instance id** (not the display name) → `CORSAIR_INSTANCE_ID`
 3. Create a developer API key (`ch_…`) → `CORSAIR_DEV_KEY`
-4. Install plugins on the instance: `exa` (research), `googledrive` (publish), `slack` (share)
-5. Create a tenant, connect Google Drive / Slack accounts → `CORSAIR_TENANT_ID`
+4. Install plugins on the instance: `exa` (research), `googledrive` (publish + import)
+5. Create a tenant, connect your Google Drive account → `CORSAIR_TENANT_ID`
 
 **Capability probe:** `GET /api/corsair/status`
 
@@ -279,7 +286,7 @@ src/
 │       ├── generate/route.ts       streamObject → live Deck JSON
 │       ├── image/route.ts          Gemini background art
 │       ├── research/route.ts       Corsair web research
-│       ├── publish/route.ts        Drive upload → share → Slack
+│       ├── publish/route.ts        Drive upload → shareable link
 │       └── corsair/status/route.ts Integration capability probe
 ├── components/
 │   ├── Composer.tsx                Prompt + settings toolbar
@@ -326,7 +333,7 @@ All slides render at **1280×720** (16:9). `SlideStage` scales the canvas to fit
 | AI (text) | [Vercel AI SDK v6](https://sdk.vercel.ai) — `streamObject`, `useObject` |
 | Default LLM | Nebius Token Factory (`@ai-sdk/openai-compatible`) |
 | AI (images) | Google Gemini via `@ai-sdk/google` |
-| Integrations | [@corsair-dev/app](https://docs.corsair.dev) |
+| Integrations | [@corsair-dev/app](https://corsair.dev/) |
 | Validation | Zod v4 |
 | Export | `pptxgenjs`, `jspdf`, `html-to-image` |
 
@@ -349,7 +356,7 @@ All slides render at **1280×720** (16:9). `SlideStage` scales the canvas to fit
 ### Corsair publish fails with HTML / JSON parse error
 
 - `CORSAIR_INSTANCE_ID` must be the **opaque id** from the dashboard, not the display name or tenant id
-- Verify plugins are installed on the instance (`googledrive`, `slack`)
+- Verify the `googledrive` plugin is installed on the instance
 - Check `GET /api/corsair/status` for capability flags
 
 ### Gemini images not appearing
@@ -366,7 +373,7 @@ All slides render at **1280×720** (16:9). `SlideStage` scales the canvas to fit
 
 ## Production notes
 
-- **Multi-tenancy:** this demo uses a single `CORSAIR_TENANT_ID`. In production, scope tenants per signed-in user so each person connects their own Drive and Slack.
+- **Multi-tenancy:** this demo uses a single `CORSAIR_TENANT_ID`. In production, scope tenants per signed-in user so each person connects their own Drive. On shared deploys set `PUBLIC_DEMO=1` to disable the Drive import/publish flows (which would otherwise run as the single owner tenant).
 - **Rate limits:** image generation runs sequentially per slide after deck completion; consider queuing or batching for large decks.
 - **Secrets:** keep `.env.local` out of version control; rotate any keys that were ever committed to `.env.example` placeholders.
 
@@ -391,5 +398,5 @@ Open source — see repository for license details.
 
 <p align="center">
   <strong>Slideflow</strong> — describe an idea, watch the deck appear.<br />
-  Built with <a href="https://sdk.vercel.ai">Vercel AI SDK</a> · integrated with <a href="https://docs.corsair.dev">Corsair</a>
+  Built with <a href="https://sdk.vercel.ai">Vercel AI SDK</a> · integrated with <a href="https://corsair.dev/">Corsair</a>
 </p>

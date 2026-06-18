@@ -46,7 +46,7 @@ export default function Home() {
           <span className="text-brand">stunning deck</span>, fast.
         </h1>
         <p className="mx-auto mt-6 max-w-3xl text-[clamp(0.875rem,1.55vw,1.0625rem)] leading-relaxed text-body sm:whitespace-nowrap">
-          Describe an idea, watch slides stream in, then publish to Drive and Slack through Corsair.
+          Describe an idea, watch slides stream in, then publish to Google Drive through Corsair.
         </p>
       </section>
 
@@ -67,7 +67,7 @@ export default function Home() {
           <Feature icon={<Wand2 size={18} />} title="Streamed, not stalled" body="Slides appear live as the model writes them, no spinner-and-pray." />
           <Feature icon={<Telescope size={18} />} title="Grounded in facts" body="Optional live research via Corsair's web plugins before a word is written." />
           <Feature icon={<Presentation size={18} />} title="Presenter-ready" body="Designer themes, speaker notes, and a fullscreen present mode." />
-          <Feature icon={<FileDown size={18} />} title="Publish & share" body="One click: PDF to Google Drive, shareable link dropped into Slack via Corsair." />
+          <Feature icon={<FileDown size={18} />} title="Publish & share" body="One click: PDF to Google Drive with a shareable link, via Corsair." />
         </div>
       </section>
 

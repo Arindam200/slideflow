@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
   let plugins: string[] = [];
   let instanceName: string | undefined;
-  let tenantId = ctx.tenantId;
+  const tenantId = ctx.tenantId;
   let error: string | null = null;
 
   try {
@@ -46,7 +46,6 @@ export async function GET(req: Request) {
     capabilities: {
       research: has("exa", "tavily", "firecrawl"),
       drive: publishDisabled ? false : has("googledrive"),
-      slack: publishDisabled ? false : has("slack"),
     },
     connectUrl,
     error,

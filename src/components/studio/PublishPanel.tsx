@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import {
-  X, Loader2, Check, ExternalLink, Copy, CloudUpload, Hash, AlertTriangle, ArrowUpRight, Link2,
+  X, Loader2, Check, ExternalLink, Copy, CloudUpload, AlertTriangle, ArrowUpRight, Link2,
 } from "lucide-react";
 import { renderPdfBase64 } from "@/lib/export-client";
 
 type Result = {
   driveUrl?: string;
-  slack?: { posted: boolean; channel?: string; error?: string };
 };
 
 type CorsairStatus = {
@@ -16,7 +15,7 @@ type CorsairStatus = {
   instanceName?: string;
   tenantId?: string;
   publishDisabled?: boolean;
-  capabilities?: { research?: boolean; drive?: boolean; slack?: boolean };
+  capabilities?: { research?: boolean; drive?: boolean };
   connectUrl?: string;
   error?: string | null;
 };
@@ -30,8 +29,6 @@ export function PublishPanel({
   getNodes: () => HTMLElement[];
   onClose: () => void;
 }) {
-  const [channel, setChannel] = useState("");
-  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState<string>("");
   const [result, setResult] = useState<Result | null>(null);
@@ -56,11 +53,11 @@ export function PublishPanel({
       setStage("Rendering PDF…");
       const pdfBase64 = await renderPdfBase64(getNodes());
 
-      setStage(channel ? "Uploading to Drive & posting to Slack…" : "Uploading to Google Drive…");
+      setStage("Uploading to Google Drive…");
       const res = await fetch("/api/publish", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title, pdfBase64, channel: channel.trim(), message: message.trim() }),
+        body: JSON.stringify({ title, pdfBase64 }),
       });
 
       const text = await res.text();
@@ -76,7 +73,7 @@ export function PublishPanel({
         if (json.needsAuth && json.signInLink) setSignInLink(json.signInLink as string);
         return;
       }
-      setResult({ driveUrl: json.driveUrl as string, slack: json.slack as Result["slack"] });
+      setResult({ driveUrl: json.driveUrl as string });
     } catch (e) {
       setError((e as Error).message || "Publish failed.");
     } finally {
@@ -108,7 +105,7 @@ export function PublishPanel({
             </span>
             <div>
               <h2 className="text-[15px] font-medium text-white">Publish &amp; share</h2>
-              <p className="text-[12px] text-body">Drive → shareable link → Slack, via Corsair</p>
+              <p className="text-[12px] text-body">Drive → shareable link, via Corsair</p>
             </div>
           </div>
           <button onClick={onClose} className="text-muted transition hover:text-white">
@@ -130,7 +127,7 @@ export function PublishPanel({
               <a href="https://app.corsair.dev/dashboard" target="_blank" rel="noreferrer" className="text-brand underline">
                 app.corsair.dev
               </a>
-              ), then install <b>googledrive</b> and optionally <b>slack</b>.
+              ), then install the <b>googledrive</b> plugin.
             </Notice>
           ) : result ? (
             <Success result={result} title={title} onCopy={copy} copied={copied} />
@@ -147,8 +144,8 @@ export function PublishPanel({
               )}
 
               <p className="mb-4 text-[13.5px] leading-relaxed text-body">
-                We&apos;ll upload <b className="text-white">{title}</b> as a PDF to your Google Drive,
-                make it shareable by link, and (optionally) drop that link into Slack.
+                We&apos;ll upload <b className="text-white">{title}</b> as a PDF to your Google Drive
+                and make it shareable by link.
               </p>
 
               {connectUrl && (
@@ -159,36 +156,9 @@ export function PublishPanel({
                   className="mb-4 flex items-center gap-2 rounded-md border border-brand/30 bg-brand/10 px-3 py-2.5 text-[13px] text-brand transition hover:bg-brand/15"
                 >
                   <Link2 size={14} />
-                  Connect Google Drive {status?.capabilities?.slack ? "& Slack" : ""}
+                  Connect Google Drive
                   <ArrowUpRight size={12} className="ml-auto" />
                 </a>
-              )}
-
-              <label className="mb-1.5 block text-[12px] font-medium text-body">
-                Slack channel <span className="text-muted">(optional; requires slack plugin)</span>
-              </label>
-              <div className="mb-4 flex items-center gap-2 rounded-md border border-edge bg-ink-2 px-3">
-                <Hash size={14} className="text-muted" />
-                <input
-                  value={channel}
-                  onChange={(e) => setChannel(e.target.value.replace(/^#/, ""))}
-                  placeholder="team-updates"
-                  disabled={!status?.capabilities?.slack}
-                  className="h-10 flex-1 bg-transparent text-[14px] text-white placeholder:text-muted focus:outline-none disabled:opacity-40"
-                />
-              </div>
-
-              {channel && (
-                <>
-                  <label className="mb-1.5 block text-[12px] font-medium text-body">Message <span className="text-muted">(optional)</span></label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={2}
-                    placeholder="Fresh off the press, feedback welcome."
-                    className="mb-4 w-full resize-none rounded-md border border-edge bg-ink-2 px-3 py-2 text-[14px] text-white placeholder:text-muted focus:outline-none"
-                  />
-                </>
               )}
 
               {(error || status?.error) && (
@@ -213,7 +183,7 @@ export function PublishPanel({
                 className="flex w-full items-center justify-center gap-2 rounded-md bg-brand px-4 py-2.5 text-[14px] font-medium text-white transition hover:bg-brand-active disabled:opacity-60"
               >
                 {busy ? <Loader2 size={15} className="animate-spin" /> : <CloudUpload size={15} />}
-                {busy ? stage || "Publishing…" : channel ? "Publish & post to Slack" : "Publish to Drive"}
+                {busy ? stage || "Publishing…" : "Publish to Drive"}
               </button>
             </>
           )}
@@ -240,14 +210,6 @@ function Success({ result, title, onCopy, copied }: { result: Result; title: str
           <ExternalLink size={14} />
         </a>
       </div>
-
-      {result.slack?.posted ? (
-        <Step ok label={`Posted to #${result.slack.channel}`} sub="Link shared with the channel" />
-      ) : result.slack?.error ? (
-        <Step ok={false} label={`Slack: ${result.slack.channel ? `#${result.slack.channel}` : "skipped"}`} sub={result.slack.error} />
-      ) : (
-        <Step ok label="Slack" sub="Skipped: no channel given" muted />
-      )}
     </div>
   );
 }

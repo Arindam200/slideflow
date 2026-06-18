@@ -63,6 +63,7 @@ export function buildUserPrompt(
   req: GenerateRequest,
   research?: string,
   meta?: { plugin?: string; sourceCount?: number },
+  source?: { title?: string; text: string },
 ) {
   const theme = getTheme(req.themeId);
   const contentSlides = Math.max(1, req.slideCount - 2);
@@ -91,6 +92,14 @@ export function buildUserPrompt(
   lines.push(`- Include at least one "section" divider if the deck has 5+ slides.`);
   lines.push(`- No slide should feel crowded; if content doesn't fit cleanly, split it across two slides with different layouts.`);
   lines.push(`- Populate the correct layout fields; do NOT put visible copy in "notes".`);
+
+  if (source?.text.trim()) {
+    lines.push(``);
+    lines.push(
+      `SOURCE DOCUMENT${source.title ? ` ("${source.title}")` : ""} — the user's own material, imported via Google Drive. Build the deck primarily from this content: preserve its facts, structure, and terminology, and turn it into a clear narrative. The brief above sets framing; this document is the substance.`,
+    );
+    lines.push(source.text.trim());
+  }
 
   if (research?.trim()) {
     lines.push(``);

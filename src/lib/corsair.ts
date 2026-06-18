@@ -20,9 +20,9 @@ export function isConfigured(): boolean {
 
 /**
  * Public-demo guard. On a shared deploy every request runs as the single
- * configured tenant, so Drive/Slack publishing would write to the owner's
- * account for every visitor. Set PUBLIC_DEMO=1 there to disable Publish &
- * Share (local PDF/PPTX export still works). Leave unset locally.
+ * configured tenant, so Drive publishing (and source import) would read/write
+ * the owner's account for every visitor. Set PUBLIC_DEMO=1 there to disable
+ * those flows (local PDF/PPTX export still works). Leave unset locally.
  */
 export function isPublishDisabled(): boolean {
   const v = process.env.PUBLIC_DEMO?.trim().toLowerCase();
@@ -122,7 +122,8 @@ async function resolveTenantId(
 export const OPS = {
   driveUpload: "googledrive.api.files.upload",
   driveShare: "googledrive.api.files.share",
-  slackPost: "slack.api.messages.post",
+  driveGet: "googledrive.api.files.get",
+  driveDownload: "googledrive.api.files.download",
 } as const;
 
 export const DRIVE_CONTENT_FIELD = "content";

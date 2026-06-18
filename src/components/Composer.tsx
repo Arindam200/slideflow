@@ -10,6 +10,7 @@ import {
   Palette,
   Users,
   Check,
+  FileUp,
 } from "lucide-react";
 import { TONES, type GenerateRequest, type Tone } from "@/lib/deck";
 import { THEMES, DEFAULT_THEME_ID } from "@/lib/themes";
@@ -21,7 +22,7 @@ const EXAMPLES = [
   { label: "Transformers 101", prompt: "How transformers actually work, for engineers" },
 ];
 
-type MenuId = "slides" | "tone" | "theme" | "audience";
+type MenuId = "slides" | "tone" | "theme" | "audience" | "source";
 
 export function Composer({
   onSubmit,
@@ -40,11 +41,26 @@ export function Composer({
   const [tone, setTone] = useState<Tone>(initial?.tone ?? "Professional");
   const [themeId, setThemeId] = useState(initial?.themeId ?? DEFAULT_THEME_ID);
   const [research, setResearch] = useState(initial?.research ?? true);
+  const [sourceUrl, setSourceUrl] = useState(initial?.sourceUrl ?? "");
+  const [driveAvailable, setDriveAvailable] = useState(false);
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
 
   const shellRef = useRef<HTMLDivElement>(null);
   const canSubmit = prompt.trim().length > 3 && !busy;
   const theme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/corsair/status")
+      .then((r) => r.json())
+      .then((s) => {
+        if (active) setDriveAvailable(Boolean(s?.capabilities?.drive));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!openMenu) return;
@@ -57,7 +73,15 @@ export function Composer({
 
   function submit() {
     if (!canSubmit) return;
-    onSubmit({ prompt: prompt.trim(), audience: audience.trim() || undefined, slideCount, tone, themeId, research });
+    onSubmit({
+      prompt: prompt.trim(),
+      audience: audience.trim() || undefined,
+      slideCount,
+      tone,
+      themeId,
+      research,
+      sourceUrl: driveAvailable && sourceUrl.trim() ? sourceUrl.trim() : undefined,
+    });
   }
 
   function toggleMenu(id: MenuId) {
@@ -171,6 +195,32 @@ export function Composer({
                   />
                 </div>
               </ToolbarMenu>
+          )}
+
+          {driveAvailable && (
+            <ToolbarMenu
+              open={openMenu === "source"}
+              onToggle={() => toggleMenu("source")}
+              label={sourceUrl.trim() ? "Drive doc" : "Import"}
+              icon={<FileUp size={14} />}
+              muted={!sourceUrl.trim()}
+            >
+              <div className="w-64 p-2">
+                <input
+                  value={sourceUrl}
+                  onChange={(e) => setSourceUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") setOpenMenu(null);
+                  }}
+                  placeholder="Paste a Google Drive / Docs link"
+                  className="w-full rounded-lg border border-edge bg-ink-2 px-3 py-2 text-[13px] text-white placeholder:text-muted focus:border-edge-strong focus:outline-none"
+                  autoFocus
+                />
+                <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
+                  Build the deck from your own document, imported via Corsair.
+                </p>
+              </div>
+            </ToolbarMenu>
           )}
 
           <div className="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
