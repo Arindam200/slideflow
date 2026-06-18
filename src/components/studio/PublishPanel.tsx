@@ -79,7 +79,12 @@ export function PublishPanel({
         if (json.needsAuth && json.signInLink) setSignInLink(json.signInLink as string);
         return;
       }
-      setResult({ driveUrl: json.driveUrl as string });
+      const driveUrl = typeof json.driveUrl === "string" ? json.driveUrl.trim() : "";
+      if (!driveUrl) {
+        setError("Publish succeeded but no Drive link was returned. Please try again.");
+        return;
+      }
+      setResult({ driveUrl });
     } catch (e) {
       setError((e as Error).message || "Publish failed.");
     } finally {
