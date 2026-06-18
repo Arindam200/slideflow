@@ -1,26 +1,184 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-display: var(--font-sans); /* chrome uses one sans family (Inter ≈ abcDiatype) */
+  --font-mono: var(--font-mono);
+
+  /* App chrome palette: Corsair dark developer-infra system.
+     Single electric-blue accent; depth via brightness steps, not shadows. */
+  --color-ink: #0f0f0f; /* canvas */
+  --color-ink-2: #0a0a0a; /* deep wells / code surfaces */
+  --color-black: #000000; /* canvas-deep, terminal/code only */
+  --color-panel: #181818; /* surface-card */
+  --color-panel-2: #222222; /* surface-card-elevated */
+  --color-panel-3: #2a2a2a; /* surface-strong (menus) */
+  --color-edge: #222222; /* hairline */
+  --color-edge-soft: #1a1a1a; /* hairline-soft */
+  --color-edge-strong: #333333; /* hairline-strong */
+  --color-body: #a8a8a8; /* default running text */
+  --color-muted: #888888; /* muted text */
+  --color-muted-soft: #666666; /* disabled */
+  --color-haze: #a8a8a8;
+  --color-brand: #0007cd; /* Corsair blue, primary */
+  --color-brand-active: #0005a3; /* press */
+  --color-brand-2: #1a26ff; /* spotlight glow tone (brighter blue) */
+  --color-ok: #33d17a;
+  --color-err: #ff4d4d;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-ink);
+  color: #ededed;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.011em;
+}
+
+::selection {
+  background: rgba(26, 38, 255, 0.32);
+}
+
+/* Thin, unobtrusive scrollbars inside the app shell. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 99px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.animate-float-up {
+  animation: float-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Single centered electric-blue spotlight glow behind the hero. */
+.hero-aurora {
+  background:
+    radial-gradient(50% 40% at 50% 8%, rgba(26, 38, 255, 0.28), transparent 70%),
+    radial-gradient(60% 50% at 50% 0%, rgba(0, 7, 205, 0.22), transparent 75%);
+}
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 2×2 terminal mockup grid, Corsair brand signature. */
+.terminal-grid {
+  position: relative;
+  border-radius: 16px;
+  background: var(--color-black);
+  border: 1px solid var(--color-edge);
+}
+.terminal-grid::before {
+  content: "";
+  position: absolute;
+  inset: -40px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(26, 38, 255, 0.18), transparent 70%);
+}
+.terminal-pane {
+  background: var(--color-panel-2);
+  border: 1px solid var(--color-edge);
+}
+
+/* Studio canvas spotlight behind the slide frame. */
+.studio-spotlight {
+  background:
+    radial-gradient(45% 35% at 50% 45%, rgba(26, 38, 255, 0.14), transparent 70%),
+    var(--color-ink);
+}
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.04); }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2.4s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.progress-indeterminate {
+  animation: progress-indeterminate 1.8s ease-in-out infinite;
+}
+
+.badge-pill {
+  border-radius: 9999px;
+  border: 1px solid var(--color-edge);
+  background: var(--color-panel-2);
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-body);
+}
+
+/* Landing composer: compact chat-style input */
+.composer-input textarea {
+  min-height: 2.75rem;
+  max-height: 8rem;
+}
+.composer-menu {
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.65);
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

@@ -9,9 +9,23 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.85",
+    "@ai-sdk/google": "^3.0.83",
+    "@ai-sdk/openai": "^3.0.72",
+    "@ai-sdk/openai-compatible": "^2.0.51",
+    "@ai-sdk/react": "^3.0.209",
+    "@corsair-dev/app": "^0.1.5",
+    "ai": "^6.0.207",
+    "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.20.0",
+    "motion": "^12.40.0",
+    "nanoid": "^5.1.11",
     "next": "16.2.9",
+    "pptxgenjs": "^4.0.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

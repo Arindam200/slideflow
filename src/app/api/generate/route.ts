@@ -1,0 +1,86 @@
+import { streamObject } from "ai";
+import { DeckSchema, type GenerateRequest, TONES } from "@/lib/deck";
+import { getModel } from "@/lib/ai";
+import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompt";
+import { THEMES } from "@/lib/themes";
+import { isConfigured } from "@/lib/corsair";
+import { gatherResearch } from "@/lib/research";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+function sanitize(raw: unknown): GenerateRequest | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const prompt = typeof r.prompt === "string" ? r.prompt.trim() : "";
+  if (!prompt) return null;
+
+  const slideCount = Math.min(
+    20,
+    Math.max(3, Math.round(Number(r.slideCount) || 8)),
+  );
+  const tone = (TONES as readonly string[]).includes(r.tone as string)
+    ? (r.tone as GenerateRequest["tone"])
+    : "Professional";
+  const themeId = THEMES.some((t) => t.id === r.themeId)
+    ? (r.themeId as string)
+    : THEMES[0].id;
+
+  return {
+    prompt: prompt.slice(0, 4000),
+    slideCount,
+    tone,
+    themeId,
+    audience: typeof r.audience === "string" ? r.audience.slice(0, 300) : undefined,
+    research: Boolean(r.research),
+  };
+}
+
+export async function POST(req: Request) {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const reqData = sanitize(body);
+  if (!reqData) {
+    return Response.json({ error: "A presentation brief is required." }, { status: 400 });
+  }
+
+  // Ground the deck in live facts via Corsair when research is on or Corsair is configured.
+  let research: string | undefined;
+  let researchMeta: { plugin?: string; sourceCount?: number } | undefined;
+  const shouldResearch = reqData.research || isConfigured();
+  if (shouldResearch) {
+    try {
+      const result = await gatherResearch(reqData);
+      if (result.available && result.digest) {
+        research = result.digest;
+        researchMeta = { plugin: result.plugin, sourceCount: result.sources?.length };
+      }
+    } catch (e) {
+      console.warn("[generate] research failed", e);
+    }
+  }
+
+  let model;
+  try {
+    model = getModel();
+  } catch (e) {
+    return Response.json({ error: (e as Error).message }, { status: 500 });
+  }
+
+  const result = streamObject({
+    model,
+    schema: DeckSchema,
+    system: buildSystemPrompt(),
+    prompt: buildUserPrompt(reqData, research, researchMeta),
+    temperature: 0.8,
+    abortSignal: req.signal,
+    onError: (e) => console.error("[generate] stream error", e),
+  });
+
+  return result.toTextStreamResponse();
+}
