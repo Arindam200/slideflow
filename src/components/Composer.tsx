@@ -43,6 +43,8 @@ export function Composer({
   const [research, setResearch] = useState(initial?.research ?? true);
   const [sourceUrl, setSourceUrl] = useState(initial?.sourceUrl ?? "");
   const [driveAvailable, setDriveAvailable] = useState(false);
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [connectUrl, setConnectUrl] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
 
   const shellRef = useRef<HTMLDivElement>(null);
@@ -51,14 +53,21 @@ export function Composer({
 
   useEffect(() => {
     let active = true;
-    fetch("/api/corsair/status")
-      .then((r) => r.json())
-      .then((s) => {
-        if (active) setDriveAvailable(Boolean(s?.capabilities?.drive));
-      })
-      .catch(() => {});
+    const load = () =>
+      fetch("/api/corsair/status?connect=1")
+        .then((r) => r.json())
+        .then((s) => {
+          if (!active) return;
+          setDriveAvailable(Boolean(s?.capabilities?.driveInstalled));
+          setDriveConnected(Boolean(s?.driveConnected));
+          setConnectUrl(typeof s?.connectUrl === "string" ? s.connectUrl : null);
+        })
+        .catch(() => {});
+    load();
+    window.addEventListener("focus", load);
     return () => {
       active = false;
+      window.removeEventListener("focus", load);
     };
   }, []);
 
@@ -80,7 +89,7 @@ export function Composer({
       tone,
       themeId,
       research,
-      sourceUrl: driveAvailable && sourceUrl.trim() ? sourceUrl.trim() : undefined,
+      sourceUrl: driveConnected && sourceUrl.trim() ? sourceUrl.trim() : undefined,
     });
   }
 
@@ -213,12 +222,28 @@ export function Composer({
                     if (e.key === "Enter") setOpenMenu(null);
                   }}
                   placeholder="Paste a Google Drive / Docs link"
-                  className="w-full rounded-lg border border-edge bg-ink-2 px-3 py-2 text-[13px] text-white placeholder:text-muted focus:border-edge-strong focus:outline-none"
-                  autoFocus
+                  disabled={!driveConnected}
+                  className="w-full rounded-lg border border-edge bg-ink-2 px-3 py-2 text-[13px] text-white placeholder:text-muted focus:border-edge-strong focus:outline-none disabled:opacity-50"
+                  autoFocus={driveConnected}
                 />
-                <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
-                  Build the deck from your own document, imported via Corsair.
-                </p>
+                {driveConnected ? (
+                  <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
+                    Build the deck from your own document, imported via Corsair.
+                  </p>
+                ) : connectUrl ? (
+                  <a
+                    href={connectUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 flex items-center gap-1.5 rounded-md border border-brand/30 bg-brand/10 px-2.5 py-2 text-[12px] text-brand transition hover:bg-brand/15"
+                  >
+                    Connect your Google Drive to import
+                  </a>
+                ) : (
+                  <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
+                    Connect your Google Drive to import your own documents.
+                  </p>
+                )}
               </div>
             </ToolbarMenu>
           )}

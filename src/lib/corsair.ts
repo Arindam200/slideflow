@@ -54,8 +54,36 @@ export async function getCorsair(): Promise<CorsairCtx | null> {
   }
 }
 
+/** The shared system tenant (from env) — used for read-only web research. */
 export function tenant(ctx: CorsairCtx) {
   return ctx.client.instance(ctx.instanceId).tenant(ctx.tenantId);
+}
+
+/** A specific visitor's tenant — used for their own Drive (import + publish). */
+export function scopedTenant(ctx: CorsairCtx, tenantId: string) {
+  return ctx.client.instance(ctx.instanceId).tenant(tenantId);
+}
+
+/**
+ * Make sure a tenant exists before running ops against it. `tenants.create`
+ * is idempotent for our purposes: a duplicate id just throws, which we ignore.
+ */
+export async function ensureTenant(ctx: CorsairCtx, tenantId: string): Promise<void> {
+  try {
+    await ctx.client.instance(ctx.instanceId).tenants.create(tenantId);
+  } catch {
+    /* already exists (or transient) — ops below surface any real failure */
+  }
+}
+
+/** Whether this tenant has connected their Google Drive account. */
+export async function isDriveConnected(ctx: CorsairCtx, tenantId: string): Promise<boolean> {
+  try {
+    const { fields } = await ctx.client.instance(ctx.instanceId).plugins.credentials.list("googledrive", tenantId);
+    return fields.some((f) => f.scope === "account" && f.set);
+  } catch {
+    return false;
+  }
 }
 
 export function formatCorsairError(err: unknown): string {

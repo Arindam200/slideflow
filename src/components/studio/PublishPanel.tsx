@@ -15,7 +15,8 @@ type CorsairStatus = {
   instanceName?: string;
   tenantId?: string;
   publishDisabled?: boolean;
-  capabilities?: { research?: boolean; drive?: boolean };
+  driveConnected?: boolean;
+  capabilities?: { research?: boolean; driveInstalled?: boolean };
   connectUrl?: string;
   error?: string | null;
 };
@@ -38,10 +39,15 @@ export function PublishPanel({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetch("/api/corsair/status?connect=1")
-      .then((r) => r.json())
-      .then((d) => setStatus(d))
-      .catch(() => setStatus({ configured: false }));
+    const load = () =>
+      fetch("/api/corsair/status?connect=1")
+        .then((r) => r.json())
+        .then((d) => setStatus(d))
+        .catch(() => setStatus({ configured: false }));
+    load();
+    // Re-check after the user returns from the connect tab.
+    window.addEventListener("focus", load);
+    return () => window.removeEventListener("focus", load);
   }, []);
 
   async function publish() {
@@ -116,9 +122,8 @@ export function PublishPanel({
         <div className="p-5">
           {status?.publishDisabled ? (
             <Notice>
-              Publish &amp; Share is turned off on this public demo, so decks don&apos;t upload to
-              anyone&apos;s Drive. Use <b>Export</b> to download the deck as PDF or PPTX, or run the
-              project locally to publish to your own Google Drive.
+              Publish &amp; Share is turned off on this deployment. Use <b>Export</b> to download the
+              deck as PDF or PPTX, or run the project locally to publish to your own Google Drive.
             </Notice>
           ) : configured === false ? (
             <Notice>
@@ -136,19 +141,23 @@ export function PublishPanel({
               {status?.instanceName && (
                 <p className="mb-3 text-[12px] text-muted">
                   Instance <span className="text-body">{status.instanceName}</span>
-                  {status.tenantId && <> · tenant <span className="text-body">{status.tenantId}</span></>}
-                  {status.capabilities?.drive === false && (
+                  {status.capabilities?.driveInstalled === false && (
                     <span className="ml-2 text-err">· Drive plugin not installed</span>
                   )}
                 </p>
               )}
 
               <p className="mb-4 text-[13.5px] leading-relaxed text-body">
-                We&apos;ll upload <b className="text-white">{title}</b> as a PDF to your Google Drive
-                and make it shareable by link.
+                We&apos;ll upload <b className="text-white">{title}</b> as a PDF to <b className="text-white">your own</b> Google
+                Drive and make it shareable by link. Connect your account once — it stays linked to this browser.
               </p>
 
-              {connectUrl && (
+              {status?.driveConnected ? (
+                <div className="mb-4 flex items-center gap-2 rounded-md border border-ok/30 bg-ok/10 px-3 py-2.5 text-[13px] text-ok">
+                  <Check size={14} />
+                  Your Google Drive is connected
+                </div>
+              ) : connectUrl ? (
                 <a
                   href={connectUrl}
                   target="_blank"
@@ -156,10 +165,10 @@ export function PublishPanel({
                   className="mb-4 flex items-center gap-2 rounded-md border border-brand/30 bg-brand/10 px-3 py-2.5 text-[13px] text-brand transition hover:bg-brand/15"
                 >
                   <Link2 size={14} />
-                  Connect Google Drive
+                  Connect your Google Drive
                   <ArrowUpRight size={12} className="ml-auto" />
                 </a>
-              )}
+              ) : null}
 
               {(error || status?.error) && (
                 <div className="mb-4 rounded-md border border-err/30 bg-err/10 p-3 text-[12.5px] text-[#ff8a8a]">
@@ -179,11 +188,11 @@ export function PublishPanel({
 
               <button
                 onClick={publish}
-                disabled={busy || status?.capabilities?.drive === false}
+                disabled={busy || status?.capabilities?.driveInstalled === false || !status?.driveConnected}
                 className="flex w-full items-center justify-center gap-2 rounded-md bg-brand px-4 py-2.5 text-[14px] font-medium text-white transition hover:bg-brand-active disabled:opacity-60"
               >
                 {busy ? <Loader2 size={15} className="animate-spin" /> : <CloudUpload size={15} />}
-                {busy ? stage || "Publishing…" : "Publish to Drive"}
+                {busy ? stage || "Publishing…" : status?.driveConnected ? "Publish to Drive" : "Connect Drive to publish"}
               </button>
             </>
           )}
