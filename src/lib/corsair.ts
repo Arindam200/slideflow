@@ -18,6 +18,17 @@ export function isConfigured(): boolean {
   );
 }
 
+/**
+ * Public-demo guard. On a shared deploy every request runs as the single
+ * configured tenant, so Drive/Slack publishing would write to the owner's
+ * account for every visitor. Set PUBLIC_DEMO=1 there to disable Publish &
+ * Share (local PDF/PPTX export still works). Leave unset locally.
+ */
+export function isPublishDisabled(): boolean {
+  const v = process.env.PUBLIC_DEMO?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 let cached: CorsairCtx | null = null;
 let inflight: Promise<CorsairCtx | null> | null = null;
 

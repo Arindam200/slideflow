@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
-import { getCorsair, tenant, OPS, DRIVE_CONTENT_FIELD, formatCorsairError } from "@/lib/corsair";
+import { getCorsair, tenant, OPS, DRIVE_CONTENT_FIELD, formatCorsairError, isPublishDisabled } from "@/lib/corsair";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
+  if (isPublishDisabled()) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Publish & Share is disabled on this public demo. Run it locally to upload to your own Google Drive.",
+      },
+      { status: 403 },
+    );
+  }
+
   const ctx = await getCorsair();
   if (!ctx) {
     return NextResponse.json(

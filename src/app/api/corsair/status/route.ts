@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCorsair, tenant, formatCorsairError } from "@/lib/corsair";
+import { getCorsair, tenant, formatCorsairError, isPublishDisabled } from "@/lib/corsair";
 
 export const runtime = "nodejs";
 
@@ -23,10 +23,11 @@ export async function GET(req: Request) {
   }
 
   const has = (...ids: string[]) => ids.some((id) => plugins.includes(id));
+  const publishDisabled = isPublishDisabled();
 
   const wantLink = new URL(req.url).searchParams.get("connect") === "1";
   let connectUrl: string | undefined;
-  if (wantLink) {
+  if (wantLink && !publishDisabled) {
     try {
       const link = await tenant(ctx).connectLink.create();
       connectUrl = link.url;
@@ -41,10 +42,11 @@ export async function GET(req: Request) {
     instanceName,
     tenantId,
     plugins,
+    publishDisabled,
     capabilities: {
       research: has("exa", "tavily", "firecrawl"),
-      drive: has("googledrive"),
-      slack: has("slack"),
+      drive: publishDisabled ? false : has("googledrive"),
+      slack: publishDisabled ? false : has("slack"),
     },
     connectUrl,
     error,

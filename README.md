@@ -106,8 +106,8 @@ Composer                   useObject → POST /api/generate
 ### Install & run
 
 ```bash
-git clone https://github.com/corsair-dev/corsair-demo.git
-cd corsair-demo
+git clone https://github.com/Arindam200/slideflow.git
+cd slideflow
 
 pnpm install
 cp .env.example .env.local
@@ -179,7 +179,7 @@ See [Corsair integrations](#corsair-integrations) for setup details.
 ### Site (optional)
 
 ```bash
-NEXT_PUBLIC_GITHUB_REPO=https://github.com/you/slideflow
+NEXT_PUBLIC_GITHUB_REPO=https://github.com/Arindam200/slideflow
 ```
 
 Powers the **Star the repo** header link on the landing page.

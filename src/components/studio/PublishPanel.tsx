@@ -15,6 +15,7 @@ type CorsairStatus = {
   configured: boolean;
   instanceName?: string;
   tenantId?: string;
+  publishDisabled?: boolean;
   capabilities?: { research?: boolean; drive?: boolean; slack?: boolean };
   connectUrl?: string;
   error?: string | null;
@@ -116,7 +117,13 @@ export function PublishPanel({
         </div>
 
         <div className="p-5">
-          {configured === false ? (
+          {status?.publishDisabled ? (
+            <Notice>
+              Publish &amp; Share is turned off on this public demo, so decks don&apos;t upload to
+              anyone&apos;s Drive. Use <b>Export</b> to download the deck as PDF or PPTX, or run the
+              project locally to publish to your own Google Drive.
+            </Notice>
+          ) : configured === false ? (
             <Notice>
               Connect Corsair to publish. Set <code className="text-brand">CORSAIR_DEV_KEY</code> and{" "}
               <code className="text-brand">CORSAIR_INSTANCE_ID</code> (the opaque instance id from{" "}
