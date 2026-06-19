@@ -4,7 +4,7 @@
 
 **From a sentence to a stunning deck, live.**
 
-**Powered by [Corsair](https://corsair.dev/)** for live web research, Google Drive import, and one-click publishing, with zero OAuth code in this repo.
+**Powered by [Corsair](https://corsair.dev/)** for live web research, Google Drive import, and one-click publishing, with zero OAuth code in this repo. Deck generation runs on **[Nebius Token Factory](https://dub.sh/nebius)** by default (Anthropic and OpenAI also supported).
 
 Slideflow is an open-source AI presentation studio. Describe an idea in plain language, watch slides stream in as they are written, edit any text inline, present fullscreen, and export to PDF or PowerPoint. Optional [Corsair](https://corsair.dev/) integrations ground decks in live web research, import source material from Google Drive, and publish finished PDFs back to Google Drive, with zero OAuth code in this repo.
 
@@ -131,7 +131,7 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 
 ### Model provider (required, pick one)
 
-Slideflow generates deck **text and structure** through the Vercel AI SDK. Provider priority:
+Slideflow generates deck **text and structure** through the Vercel AI SDK, defaulting to [Nebius Token Factory](https://dub.sh/nebius). Provider priority:
 
 | Priority | Variable | Default model |
 |---|---|---|
@@ -140,7 +140,7 @@ Slideflow generates deck **text and structure** through the Vercel AI SDK. Provi
 | 3 | `OPENAI_API_KEY` | `gpt-4.1` |
 
 ```bash
-# Get a key at https://tokenfactory.nebius.com
+# Get a key at https://dub.sh/nebius
 NEBIUS_API_KEY=your_key_here
 ```
 
@@ -348,7 +348,7 @@ All slides render at **1280×720** (16:9). `SlideStage` scales the canvas to fit
 | Framework | [Next.js 16](https://nextjs.org) (App Router) |
 | UI | React 19, Tailwind CSS v4, Lucide icons |
 | AI (text) | [Vercel AI SDK v6](https://sdk.vercel.ai), `streamObject`, `useObject` |
-| Default LLM | Nebius Token Factory (`@ai-sdk/openai-compatible`) |
+| Default LLM | [Nebius Token Factory](https://dub.sh/nebius) (`@ai-sdk/openai-compatible`) |
 | AI (images) | Google Gemini via `@ai-sdk/google` |
 | Integrations | [@corsair-dev/app](https://corsair.dev/) |
 | Validation | Zod v4 |
