@@ -6,6 +6,7 @@ import { THEMES } from "@/lib/themes";
 import { isConfigured, isPublishDisabled } from "@/lib/corsair";
 import { gatherResearch } from "@/lib/research";
 import { gatherSource } from "@/lib/source";
+import { readVisitorTenantId } from "@/lib/visitor";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -55,9 +56,10 @@ export async function POST(req: Request) {
   // Disabled on the public demo, where every request shares one tenant — we won't
   // read the owner's private Drive on behalf of anonymous visitors.
   let source: { title?: string; text: string } | undefined;
-  if (reqData.sourceUrl && !isPublishDisabled()) {
+  const visitorTenantId = readVisitorTenantId(req);
+  if (reqData.sourceUrl && visitorTenantId && !isPublishDisabled()) {
     try {
-      const s = await gatherSource(reqData.sourceUrl);
+      const s = await gatherSource(reqData.sourceUrl, visitorTenantId);
       if (s.available && s.text) source = { title: s.title, text: s.text };
       else console.warn("[generate] source import skipped:", s.reason);
     } catch (e) {

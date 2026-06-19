@@ -1,5 +1,5 @@
 import "server-only";
-import { getCorsair, tenant, OPS } from "@/lib/corsair";
+import { getCorsair, scopedTenant, ensureTenant, OPS } from "@/lib/corsair";
 
 /**
  * Import a user's existing document from Google Drive (via Corsair) and turn it
@@ -41,15 +41,16 @@ export function parseDriveFileId(input: string): string | null {
   return null;
 }
 
-/** Ground a deck in a user-owned Drive document. */
-export async function gatherSource(input: string): Promise<SourceResult> {
+/** Ground a deck in a user-owned Drive document, read as the visitor's tenant. */
+export async function gatherSource(input: string, tenantId: string): Promise<SourceResult> {
   const fileId = parseDriveFileId(input);
   if (!fileId) return { available: false, reason: "bad_url" };
 
   const ctx = await getCorsair();
   if (!ctx) return { available: false, reason: "not_configured" };
 
-  const t = tenant(ctx);
+  await ensureTenant(ctx, tenantId);
+  const t = scopedTenant(ctx, tenantId);
 
   // Metadata first — gives us a title and lets us detect native Google formats
   // (Docs/Sheets/Slides), which need an export rather than a raw download.

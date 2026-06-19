@@ -204,11 +204,24 @@ Research snippets are passed into the generation prompt so slides cite real numb
 
 **API:** `POST /api/research` · **Code:** `src/lib/research.ts`, `src/app/api/research/route.ts`
 
+### Per-visitor tenants (multi-tenant)
+
+Drive import and publish run as the **visitor's own** Corsair tenant, so every
+person reads/writes their own Google account — never the deploy owner's.
+
+1. Each browser gets an anonymous, httpOnly cookie holding a Corsair tenant id (`src/lib/visitor.ts`)
+2. `tenants.create(id)` provisions that tenant on first use
+3. A self-service `connectLink.create({ plugins: ["googledrive"] })` lets the visitor authorize their own Drive
+4. `plugins.credentials.list("googledrive", tenantId)` reports whether they've connected
+
+Research stays on the shared **system tenant** (`CORSAIR_TENANT_ID`) — it's read-only public web, so it needs no per-visitor identity.
+
 ### Publish & Share
 
 1. Render deck PDF in the browser
-2. Upload to **Google Drive** (`googledrive.api.files.upload`)
-3. Create a shareable link (`googledrive.api.files.share`) and return it
+2. Ensure the visitor's tenant + that they've connected Drive (else return a connect link)
+3. Upload to **their** Google Drive (`googledrive.api.files.upload`)
+4. Create a shareable link (`googledrive.api.files.share`) and return it
 
 **API:** `POST /api/publish` · **Code:** `src/app/api/publish/route.ts`
 
@@ -220,7 +233,7 @@ The input-side mirror of research: ground a deck in your own document.
 2. Resolve the file id, fetch metadata (`googledrive.api.files.get`)
 3. Download the content (`googledrive.api.files.download`) and feed it to the generator
 
-**Code:** `src/lib/source.ts` (wired into `POST /api/generate`)
+**Code:** `src/lib/source.ts` (wired into `POST /api/generate`, runs as the visitor's tenant)
 
 ### Setup checklist
 
@@ -228,7 +241,9 @@ The input-side mirror of research: ground a deck in your own document.
 2. Copy the **opaque instance id** (not the display name) → `CORSAIR_INSTANCE_ID`
 3. Create a developer API key (`ch_…`) → `CORSAIR_DEV_KEY`
 4. Install plugins on the instance: `exa` (research), `googledrive` (publish + import)
-5. Create a tenant, connect your Google Drive account → `CORSAIR_TENANT_ID`
+5. Create a **system tenant** for live research (Exa/Tavily/Firecrawl) → `CORSAIR_TENANT_ID`
+
+> Per-visitor tenants for Drive **import** and **publish** are created automatically on-demand in the app (one per browser) and connect their own Google account — you don't configure those upfront.
 
 **Capability probe:** `GET /api/corsair/status`
 
@@ -373,7 +388,7 @@ All slides render at **1280×720** (16:9). `SlideStage` scales the canvas to fit
 
 ## Production notes
 
-- **Multi-tenancy:** this demo uses a single `CORSAIR_TENANT_ID`. In production, scope tenants per signed-in user so each person connects their own Drive. On shared deploys set `PUBLIC_DEMO=1` to disable the Drive import/publish flows (which would otherwise run as the single owner tenant).
+- **Multi-tenancy:** Drive import/publish run as a per-visitor tenant (anonymous cookie), so each person connects and uses their own Drive; research uses the shared `CORSAIR_TENANT_ID`. Swap the cookie for your signed-in user id to make tenants durable across devices. Set `PUBLIC_DEMO=1` to switch the Drive flows off entirely on a given deploy (e.g. to cap anonymous tenant creation); leave it unset to let visitors connect their own Drive.
 - **Rate limits:** image generation runs sequentially per slide after deck completion; consider queuing or batching for large decks.
 - **Secrets:** keep `.env.local` out of version control; rotate any keys that were ever committed to `.env.example` placeholders.
 

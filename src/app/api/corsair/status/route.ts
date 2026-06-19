@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { getCorsair, tenant, formatCorsairError, isPublishDisabled } from "@/lib/corsair";
+import {
+  getCorsair,
+  scopedTenant,
+  ensureTenant,
+  isDriveConnected,
+  formatCorsairError,
+  isPublishDisabled,
+} from "@/lib/corsair";
+import { readVisitorTenantId, newVisitorTenantId, setVisitorCookie } from "@/lib/visitor";
 
 export const runtime = "nodejs";
 
@@ -11,7 +19,6 @@ export async function GET(req: Request) {
 
   let plugins: string[] = [];
   let instanceName: string | undefined;
-  const tenantId = ctx.tenantId;
   let error: string | null = null;
 
   try {
@@ -24,30 +31,49 @@ export async function GET(req: Request) {
 
   const has = (...ids: string[]) => ids.some((id) => plugins.includes(id));
   const publishDisabled = isPublishDisabled();
+  const driveInstalled = !publishDisabled && has("googledrive");
 
-  const wantLink = new URL(req.url).searchParams.get("connect") === "1";
+  // Resolve (or mint) this visitor's own tenant, so Drive runs as them.
+  let tenantId = readVisitorTenantId(req);
+  let mintedCookie = false;
+  if (!tenantId) {
+    tenantId = newVisitorTenantId();
+    mintedCookie = true;
+  }
+  if (driveInstalled) {
+    await ensureTenant(ctx, tenantId);
+  }
+
+  // Per-visitor Drive connection state + a self-service connect link.
+  let driveConnected = false;
   let connectUrl: string | undefined;
-  if (wantLink && !publishDisabled) {
-    try {
-      const link = await tenant(ctx).connectLink.create();
-      connectUrl = link.url;
-    } catch (e) {
-      error ??= formatCorsairError(e);
+  if (driveInstalled) {
+    driveConnected = await isDriveConnected(ctx, tenantId);
+    const wantLink = new URL(req.url).searchParams.get("connect") === "1";
+    if (wantLink && !driveConnected) {
+      try {
+        const link = await scopedTenant(ctx, tenantId).connectLink.create({ plugins: ["googledrive"] });
+        connectUrl = link.url;
+      } catch (e) {
+        error ??= formatCorsairError(e);
+      }
     }
   }
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     configured: true,
     instanceId: ctx.instanceId,
     instanceName,
-    tenantId,
     plugins,
     publishDisabled,
+    driveConnected,
     capabilities: {
       research: has("exa", "tavily", "firecrawl"),
-      drive: publishDisabled ? false : has("googledrive"),
+      driveInstalled,
     },
     connectUrl,
     error,
   });
+  if (mintedCookie) setVisitorCookie(res, tenantId);
+  return res;
 }

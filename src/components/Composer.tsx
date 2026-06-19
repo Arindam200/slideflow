@@ -11,6 +11,8 @@ import {
   Users,
   Check,
   FileUp,
+  Link2,
+  ArrowUpRight,
 } from "lucide-react";
 import { TONES, type GenerateRequest, type Tone } from "@/lib/deck";
 import { THEMES, DEFAULT_THEME_ID } from "@/lib/themes";
@@ -43,6 +45,8 @@ export function Composer({
   const [research, setResearch] = useState(initial?.research ?? true);
   const [sourceUrl, setSourceUrl] = useState(initial?.sourceUrl ?? "");
   const [driveAvailable, setDriveAvailable] = useState(false);
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [connectUrl, setConnectUrl] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
 
   const shellRef = useRef<HTMLDivElement>(null);
@@ -51,14 +55,28 @@ export function Composer({
 
   useEffect(() => {
     let active = true;
-    fetch("/api/corsair/status")
-      .then((r) => r.json())
-      .then((s) => {
-        if (active) setDriveAvailable(Boolean(s?.capabilities?.drive));
-      })
-      .catch(() => {});
+    let inFlight = false;
+    const load = () => {
+      if (inFlight) return; // guard against rapid focus events firing concurrent fetches
+      inFlight = true;
+      fetch("/api/corsair/status?connect=1")
+        .then((r) => r.json())
+        .then((s) => {
+          if (!active) return;
+          setDriveAvailable(Boolean(s?.capabilities?.driveInstalled));
+          setDriveConnected(Boolean(s?.driveConnected));
+          setConnectUrl(typeof s?.connectUrl === "string" ? s.connectUrl : null);
+        })
+        .catch((e) => console.warn("[composer] Corsair status fetch failed:", e))
+        .finally(() => {
+          inFlight = false;
+        });
+    };
+    load();
+    window.addEventListener("focus", load);
     return () => {
       active = false;
+      window.removeEventListener("focus", load);
     };
   }, []);
 
@@ -80,7 +98,7 @@ export function Composer({
       tone,
       themeId,
       research,
-      sourceUrl: driveAvailable && sourceUrl.trim() ? sourceUrl.trim() : undefined,
+      sourceUrl: driveConnected && sourceUrl.trim() ? sourceUrl.trim() : undefined,
     });
   }
 
@@ -206,19 +224,45 @@ export function Composer({
               muted={!sourceUrl.trim()}
             >
               <div className="w-64 p-2">
-                <input
-                  value={sourceUrl}
-                  onChange={(e) => setSourceUrl(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") setOpenMenu(null);
-                  }}
-                  placeholder="Paste a Google Drive / Docs link"
-                  className="w-full rounded-lg border border-edge bg-ink-2 px-3 py-2 text-[13px] text-white placeholder:text-muted focus:border-edge-strong focus:outline-none"
-                  autoFocus
-                />
-                <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
-                  Build the deck from your own document, imported via Corsair.
-                </p>
+                {driveConnected ? (
+                  <>
+                    <input
+                      value={sourceUrl}
+                      onChange={(e) => setSourceUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") setOpenMenu(null);
+                      }}
+                      placeholder="Paste a Google Drive / Docs link"
+                      className="w-full rounded-lg border border-edge bg-ink-2 px-3 py-2 text-[13px] text-white placeholder:text-muted focus:border-edge-strong focus:outline-none"
+                      autoFocus
+                    />
+                    <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
+                      Build the deck from your own document, imported via Corsair.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="mb-2 px-0.5 text-[11.5px] leading-snug text-body">
+                      Import your own Google Drive or Docs file as the deck&apos;s source.
+                    </p>
+                    {connectUrl ? (
+                      <a
+                        href={connectUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-[13px] font-medium text-white transition hover:bg-brand-active"
+                      >
+                        <Link2 size={14} />
+                        Connect Google Drive
+                        <ArrowUpRight size={13} className="opacity-80" />
+                      </a>
+                    ) : (
+                      <p className="px-0.5 text-[11px] leading-snug text-muted">
+                        Connect Google Drive in the studio to enable import.
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             </ToolbarMenu>
           )}
