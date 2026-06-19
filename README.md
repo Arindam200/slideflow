@@ -241,7 +241,9 @@ The input-side mirror of research: ground a deck in your own document.
 2. Copy the **opaque instance id** (not the display name) → `CORSAIR_INSTANCE_ID`
 3. Create a developer API key (`ch_…`) → `CORSAIR_DEV_KEY`
 4. Install plugins on the instance: `exa` (research), `googledrive` (publish + import)
-5. Create a tenant, connect your Google Drive account → `CORSAIR_TENANT_ID`
+5. Create a **system tenant** for live research (Exa/Tavily/Firecrawl) → `CORSAIR_TENANT_ID`
+
+> Per-visitor tenants for Drive **import** and **publish** are created automatically on-demand in the app (one per browser) and connect their own Google account — you don't configure those upfront.
 
 **Capability probe:** `GET /api/corsair/status`
 

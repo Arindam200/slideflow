@@ -64,7 +64,6 @@ export async function GET(req: Request) {
     configured: true,
     instanceId: ctx.instanceId,
     instanceName,
-    tenantId,
     plugins,
     publishDisabled,
     driveConnected,

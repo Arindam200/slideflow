@@ -53,7 +53,10 @@ export function Composer({
 
   useEffect(() => {
     let active = true;
-    const load = () =>
+    let inFlight = false;
+    const load = () => {
+      if (inFlight) return; // guard against rapid focus events firing concurrent fetches
+      inFlight = true;
       fetch("/api/corsair/status?connect=1")
         .then((r) => r.json())
         .then((s) => {
@@ -62,7 +65,11 @@ export function Composer({
           setDriveConnected(Boolean(s?.driveConnected));
           setConnectUrl(typeof s?.connectUrl === "string" ? s.connectUrl : null);
         })
-        .catch(() => {});
+        .catch((e) => console.warn("[composer] Corsair status fetch failed:", e))
+        .finally(() => {
+          inFlight = false;
+        });
+    };
     load();
     window.addEventListener("focus", load);
     return () => {

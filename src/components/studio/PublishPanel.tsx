@@ -13,7 +13,6 @@ type Result = {
 type CorsairStatus = {
   configured: boolean;
   instanceName?: string;
-  tenantId?: string;
   publishDisabled?: boolean;
   driveConnected?: boolean;
   capabilities?: { research?: boolean; driveInstalled?: boolean };
@@ -39,11 +38,18 @@ export function PublishPanel({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const load = () =>
+    let inFlight = false;
+    const load = () => {
+      if (inFlight) return; // avoid concurrent fetches on rapid tab switches
+      inFlight = true;
       fetch("/api/corsair/status?connect=1")
         .then((r) => r.json())
         .then((d) => setStatus(d))
-        .catch(() => setStatus({ configured: false }));
+        .catch(() => setStatus({ configured: false }))
+        .finally(() => {
+          inFlight = false;
+        });
+    };
     load();
     // Re-check after the user returns from the connect tab.
     window.addEventListener("focus", load);

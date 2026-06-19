@@ -21,8 +21,14 @@ export function readVisitorTenantId(req: Request): string | null {
   const cookie = req.headers.get("cookie");
   if (!cookie) return null;
   const match = cookie.match(/(?:^|;\s*)sf_tenant=([^;]+)/);
-  const value = match?.[1] ? decodeURIComponent(match[1]) : null;
-  return value && VISITOR_RE.test(value) ? value : null;
+  if (!match?.[1]) return null;
+  let value: string;
+  try {
+    value = decodeURIComponent(match[1]);
+  } catch {
+    return null; // malformed percent-encoding — treat as no cookie
+  }
+  return VISITOR_RE.test(value) ? value : null;
 }
 
 /** Mint a fresh tenant id to use as a Corsair tenant id for a new visitor. */
