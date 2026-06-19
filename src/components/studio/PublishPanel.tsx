@@ -160,7 +160,7 @@ export function PublishPanel({
 
               <p className="mb-4 text-[13.5px] leading-relaxed text-body">
                 We&apos;ll upload <b className="text-white">{title}</b> as a PDF to <b className="text-white">your own</b> Google
-                Drive and make it shareable by link. Connect your account once — it stays linked to this browser.
+                Drive and make it shareable by link. Connect your account once; it stays linked to this browser.
               </p>
 
               {status?.driveConnected ? (

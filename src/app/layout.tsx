@@ -16,10 +16,41 @@ const serif = Instrument_Serif({
 });
 const mono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin"] });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
+const title = "Slideflow: AI decks that stream in as you watch";
+const description =
+  "Describe an idea and watch a beautiful deck appear slide by slide. Research, present, and export, powered by Corsair and Nebius Token Factory.";
+
 export const metadata: Metadata = {
-  title: "Slideflow — AI decks that stream in as you watch",
-  description:
-    "Describe an idea and watch a beautiful deck appear slide by slide. Research, present, and export — powered by Corsair.",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "Slideflow",
+    url: "/",
+    title,
+    description,
+    images: [
+      {
+        url: "/image.png",
+        width: 1920,
+        height: 1080,
+        alt: "Slideflow, an AI presentation studio",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/image.png"],
+  },
 };
 
 export default function RootLayout({
