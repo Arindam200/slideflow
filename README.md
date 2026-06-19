@@ -2,9 +2,11 @@
 
 # Slideflow
 
-**From a sentence to a stunning deck — live.**
+**From a sentence to a stunning deck, live.**
 
-Slideflow is an open-source AI presentation studio. Describe an idea in plain language, watch slides stream in as they are written, edit any text inline, present fullscreen, and export to PDF or PowerPoint. Optional [Corsair](https://corsair.dev/) integrations ground decks in live web research, import source material from Google Drive, and publish finished PDFs back to Google Drive — with zero OAuth code in this repo.
+**Powered by [Corsair](https://corsair.dev/)** for live web research, Google Drive import, and one-click publishing, with zero OAuth code in this repo.
+
+Slideflow is an open-source AI presentation studio. Describe an idea in plain language, watch slides stream in as they are written, edit any text inline, present fullscreen, and export to PDF or PowerPoint. Optional [Corsair](https://corsair.dev/) integrations ground decks in live web research, import source material from Google Drive, and publish finished PDFs back to Google Drive, with zero OAuth code in this repo.
 
 ---
 
@@ -46,29 +48,29 @@ The name reflects the core experience: slides **flow** into view one by one whil
 
 ### Generation
 
-- **Streaming structured output** — decks are built with the Vercel AI SDK `streamObject` and a Zod schema, so partial slides render the moment their fields arrive.
-- **Layout-aware prompting** — the model is instructed to vary layouts (stat, quote, timeline, two-column, etc.), keep copy concise, and never stash visible content in speaker notes.
-- **Live research** — when Corsair is configured, Exa / Tavily / Firecrawl pull real facts before the deck is written; facts are woven into stats, bullets, and spotlight slides.
-- **Content normalization** — `normalizeSlide()` backfills layout fields when the model omits them and promotes misplaced speaker-note text into the correct on-slide fields.
+- **Streaming structured output**: decks are built with the Vercel AI SDK `streamObject` and a Zod schema, so partial slides render the moment their fields arrive.
+- **Layout-aware prompting**: the model is instructed to vary layouts (stat, quote, timeline, two-column, etc.), keep copy concise, and never stash visible content in speaker notes.
+- **Live research**: when Corsair is configured, Exa / Tavily / Firecrawl pull real facts before the deck is written; facts are woven into stats, bullets, and spotlight slides.
+- **Content normalization**: `normalizeSlide()` backfills layout fields when the model omits them and promotes misplaced speaker-note text into the correct on-slide fields.
 
 ### Studio
 
-- **Slide sidebar** — thumbnails with layout previews and image-generation status.
-- **Inline editing** — click any headline, bullet, or body paragraph to edit; changes persist in local state.
-- **Present mode** — fullscreen playback with keyboard navigation.
-- **Regenerate** — tweak the brief (slides, tone, theme, audience, research) and run again.
+- **Slide sidebar**: thumbnails with layout previews and image-generation status.
+- **Inline editing**: click any headline, bullet, or body paragraph to edit; changes persist in local state.
+- **Present mode**: fullscreen playback with keyboard navigation.
+- **Regenerate**: tweak the brief (slides, tone, theme, audience, research) and run again.
 
 ### Visual design
 
-- **7 themes** — Corsair, Midnight, Aurora, Editorial, Solaris, Sapphire, Mono. Each defines palette, typography, and CSS gradient art.
-- **10 layouts** — cover, section, bullets, two-column, comparison, stat, quote, timeline, spotlight, closing.
-- **AI background art** (optional) — Google Gemini generates abstract editorial imagery for every layout; without a Gemini key, slides fall back to built-in CSS art at zero cost.
+- **7 themes**: Corsair, Midnight, Aurora, Editorial, Solaris, Sapphire, Mono. Each defines palette, typography, and CSS gradient art.
+- **10 layouts**: cover, section, bullets, two-column, comparison, stat, quote, timeline, spotlight, closing.
+- **AI background art** (optional): Google Gemini generates abstract editorial imagery for every layout; without a Gemini key, slides fall back to built-in CSS art at zero cost.
 
 ### Export & publish
 
-- **PDF** — client-side render via `html-to-image` + `jspdf` (pixel-perfect snapshots of the 1280×720 canvas).
-- **PPTX** — native editable PowerPoint via `pptxgenjs` (text-based, not screenshots).
-- **Publish & Share** (Corsair) — upload PDF to Google Drive and create a shareable link in one flow.
+- **PDF**: client-side render via `html-to-image` + `jspdf` (pixel-perfect snapshots of the 1280×720 canvas).
+- **PPTX**: native editable PowerPoint via `pptxgenjs` (text-based, not screenshots).
+- **Publish & Share** (Corsair): upload PDF to Google Drive and create a shareable link in one flow.
 
 ---
 
@@ -92,7 +94,7 @@ Composer                   useObject → POST /api/generate
 3. `experimental_useObject` streams a partial `Deck` JSON object from `/api/generate`.
 4. Each slide renders as soon as its `title`, `layout`, and content fields arrive.
 5. After generation completes, Gemini (if configured) paints background art per slide.
-6. Edit, present, or export — or publish through Corsair.
+6. Edit, present, or export, or publish through Corsair.
 
 ---
 
@@ -127,7 +129,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 
-### Model provider (required — pick one)
+### Model provider (required, pick one)
 
 Slideflow generates deck **text and structure** through the Vercel AI SDK. Provider priority:
 
@@ -162,7 +164,7 @@ GOOGLE_GENERATIVE_AI_API_KEY=your_key_here
 IMAGE_MODEL=gemini-3.1-flash-image   # optional override
 ```
 
-Without this key, all slides use CSS gradient art — fully functional, zero image API cost.
+Without this key, all slides use CSS gradient art, fully functional, zero image API cost.
 
 ### Corsair (optional)
 
@@ -188,7 +190,7 @@ Powers the **Star the repo** header link on the landing page.
 
 ## Corsair integrations
 
-[Corsair](https://corsair.dev/) is the integration layer — not the product name. Slideflow uses the hosted SDK (`@corsair-dev/app`) via `tenant.run(...)` with no OAuth implementation in this repo.
+[Corsair](https://corsair.dev/) is the integration layer, not the product name. Slideflow uses the hosted SDK (`@corsair-dev/app`) via `tenant.run(...)` with no OAuth implementation in this repo.
 
 ### Live research
 
@@ -200,21 +202,21 @@ Before generation, Slideflow can query connected web plugins:
 | Tavily | `tavily.api.search.search` |
 | Firecrawl | `firecrawl.api.search.run` |
 
-Research snippets are passed into the generation prompt so slides cite real numbers, dates, and names. Toggle **Research** in the composer, or leave Corsair configured — research runs automatically when the integration is available.
+Research snippets are passed into the generation prompt so slides cite real numbers, dates, and names. Toggle **Research** in the composer, or leave Corsair configured, research runs automatically when the integration is available.
 
 **API:** `POST /api/research` · **Code:** `src/lib/research.ts`, `src/app/api/research/route.ts`
 
 ### Per-visitor tenants (multi-tenant)
 
 Drive import and publish run as the **visitor's own** Corsair tenant, so every
-person reads/writes their own Google account — never the deploy owner's.
+person reads/writes their own Google account, never the deploy owner's.
 
 1. Each browser gets an anonymous, httpOnly cookie holding a Corsair tenant id (`src/lib/visitor.ts`)
 2. `tenants.create(id)` provisions that tenant on first use
 3. A self-service `connectLink.create({ plugins: ["googledrive"] })` lets the visitor authorize their own Drive
 4. `plugins.credentials.list("googledrive", tenantId)` reports whether they've connected
 
-Research stays on the shared **system tenant** (`CORSAIR_TENANT_ID`) — it's read-only public web, so it needs no per-visitor identity.
+Research stays on the shared **system tenant** (`CORSAIR_TENANT_ID`), it's read-only public web, so it needs no per-visitor identity.
 
 ### Publish & Share
 
@@ -243,7 +245,7 @@ The input-side mirror of research: ground a deck in your own document.
 4. Install plugins on the instance: `exa` (research), `googledrive` (publish + import)
 5. Create a **system tenant** for live research (Exa/Tavily/Firecrawl) → `CORSAIR_TENANT_ID`
 
-> Per-visitor tenants for Drive **import** and **publish** are created automatically on-demand in the app (one per browser) and connect their own Google account — you don't configure those upfront.
+> Per-visitor tenants for Drive **import** and **publish** are created automatically on-demand in the app (one per browser) and connect their own Google account, you don't configure those upfront.
 
 **Capability probe:** `GET /api/corsair/status`
 
@@ -262,8 +264,8 @@ The input-side mirror of research: ground a deck in your own document.
 
 | Layout | Best for |
 |---|---|
-| `cover` | Opening slide — title + subtitle |
-| `section` | Chapter divider — one punchy line |
+| `cover` | Opening slide, title + subtitle |
+| `section` | Chapter divider, one punchy line |
 | `bullets` | 3–4 parallel bullet points |
 | `two-column` | Side-by-side comparison of ideas |
 | `comparison` | Before / after, us / them |
@@ -345,7 +347,7 @@ All slides render at **1280×720** (16:9). `SlideStage` scales the canvas to fit
 |---|---|
 | Framework | [Next.js 16](https://nextjs.org) (App Router) |
 | UI | React 19, Tailwind CSS v4, Lucide icons |
-| AI (text) | [Vercel AI SDK v6](https://sdk.vercel.ai) — `streamObject`, `useObject` |
+| AI (text) | [Vercel AI SDK v6](https://sdk.vercel.ai), `streamObject`, `useObject` |
 | Default LLM | Nebius Token Factory (`@ai-sdk/openai-compatible`) |
 | AI (images) | Google Gemini via `@ai-sdk/google` |
 | Integrations | [@corsair-dev/app](https://corsair.dev/) |
@@ -366,7 +368,7 @@ All slides render at **1280×720** (16:9). `SlideStage` scales the canvas to fit
 ### Slides have titles but no body content
 
 - Regenerate with **Research** enabled if the topic needs facts
-- The model may have put copy in speaker notes — `normalizeSlide()` promotes this on finish, but stronger models (or Anthropic/OpenAI) behave more reliably
+- The model may have put copy in speaker notes, `normalizeSlide()` promotes this on finish, but stronger models (or Anthropic/OpenAI) behave more reliably
 
 ### Corsair publish fails with HTML / JSON parse error
 
@@ -377,12 +379,12 @@ All slides render at **1280×720** (16:9). `SlideStage` scales the canvas to fit
 ### Gemini images not appearing
 
 - Set `GOOGLE_GENERATIVE_AI_API_KEY` in `.env.local`
-- Images generate **after** the deck finishes — watch for the spinner on slide thumbnails
+- Images generate **after** the deck finishes, watch for the spinner on slide thumbnails
 - Failures fall back to CSS art silently; check `/api/image` in the network tab
 
 ### Dropdown menus clipped in composer
 
-- Fixed in current versions — menus open downward outside the input card. Hard-refresh if you still see clipping.
+- Fixed in current versions, menus open downward outside the input card. Hard-refresh if you still see clipping.
 
 ---
 
@@ -407,11 +409,11 @@ pnpm lint         # ESLint
 
 ## License
 
-Open source — see repository for license details.
+Open source, see repository for license details.
 
 ---
 
 <p align="center">
-  <strong>Slideflow</strong> — describe an idea, watch the deck appear.<br />
+  <strong>Slideflow</strong>, describe an idea, watch the deck appear.<br />
   Built with <a href="https://sdk.vercel.ai">Vercel AI SDK</a> · integrated with <a href="https://corsair.dev/">Corsair</a>
 </p>
