@@ -11,6 +11,8 @@ import {
   Users,
   Check,
   FileUp,
+  Link2,
+  ArrowUpRight,
 } from "lucide-react";
 import { TONES, type GenerateRequest, type Tone } from "@/lib/deck";
 import { THEMES, DEFAULT_THEME_ID } from "@/lib/themes";
@@ -222,34 +224,44 @@ export function Composer({
               muted={!sourceUrl.trim()}
             >
               <div className="w-64 p-2">
-                <input
-                  value={sourceUrl}
-                  onChange={(e) => setSourceUrl(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") setOpenMenu(null);
-                  }}
-                  placeholder="Paste a Google Drive / Docs link"
-                  disabled={!driveConnected}
-                  className="w-full rounded-lg border border-edge bg-ink-2 px-3 py-2 text-[13px] text-white placeholder:text-muted focus:border-edge-strong focus:outline-none disabled:opacity-50"
-                  autoFocus={driveConnected}
-                />
                 {driveConnected ? (
-                  <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
-                    Build the deck from your own document, imported via Corsair.
-                  </p>
-                ) : connectUrl ? (
-                  <a
-                    href={connectUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 flex items-center gap-1.5 rounded-md border border-brand/30 bg-brand/10 px-2.5 py-2 text-[12px] text-brand transition hover:bg-brand/15"
-                  >
-                    Connect your Google Drive to import
-                  </a>
+                  <>
+                    <input
+                      value={sourceUrl}
+                      onChange={(e) => setSourceUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") setOpenMenu(null);
+                      }}
+                      placeholder="Paste a Google Drive / Docs link"
+                      className="w-full rounded-lg border border-edge bg-ink-2 px-3 py-2 text-[13px] text-white placeholder:text-muted focus:border-edge-strong focus:outline-none"
+                      autoFocus
+                    />
+                    <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
+                      Build the deck from your own document, imported via Corsair.
+                    </p>
+                  </>
                 ) : (
-                  <p className="mt-1.5 px-0.5 text-[11px] leading-snug text-muted">
-                    Connect your Google Drive to import your own documents.
-                  </p>
+                  <>
+                    <p className="mb-2 px-0.5 text-[11.5px] leading-snug text-body">
+                      Import your own Google Drive or Docs file as the deck&apos;s source.
+                    </p>
+                    {connectUrl ? (
+                      <a
+                        href={connectUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-[13px] font-medium text-white transition hover:bg-brand-active"
+                      >
+                        <Link2 size={14} />
+                        Connect Google Drive
+                        <ArrowUpRight size={13} className="opacity-80" />
+                      </a>
+                    ) : (
+                      <p className="px-0.5 text-[11px] leading-snug text-muted">
+                        Connect Google Drive in the studio to enable import.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </ToolbarMenu>
