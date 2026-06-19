@@ -3,8 +3,9 @@ import { DeckSchema, type GenerateRequest, TONES } from "@/lib/deck";
 import { getModel } from "@/lib/ai";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompt";
 import { THEMES } from "@/lib/themes";
-import { isConfigured } from "@/lib/corsair";
+import { isConfigured, isPublishDisabled } from "@/lib/corsair";
 import { gatherResearch } from "@/lib/research";
+import { gatherSource } from "@/lib/source";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -33,6 +34,7 @@ function sanitize(raw: unknown): GenerateRequest | null {
     themeId,
     audience: typeof r.audience === "string" ? r.audience.slice(0, 300) : undefined,
     research: Boolean(r.research),
+    sourceUrl: typeof r.sourceUrl === "string" && r.sourceUrl.trim() ? r.sourceUrl.trim().slice(0, 600) : undefined,
   };
 }
 
@@ -47,6 +49,20 @@ export async function POST(req: Request) {
   const reqData = sanitize(body);
   if (!reqData) {
     return Response.json({ error: "A presentation brief is required." }, { status: 400 });
+  }
+
+  // Ground the deck in the user's own document, imported via Corsair (Google Drive).
+  // Disabled on the public demo, where every request shares one tenant — we won't
+  // read the owner's private Drive on behalf of anonymous visitors.
+  let source: { title?: string; text: string } | undefined;
+  if (reqData.sourceUrl && !isPublishDisabled()) {
+    try {
+      const s = await gatherSource(reqData.sourceUrl);
+      if (s.available && s.text) source = { title: s.title, text: s.text };
+      else console.warn("[generate] source import skipped:", s.reason);
+    } catch (e) {
+      console.warn("[generate] source import failed", e);
+    }
   }
 
   // Ground the deck in live facts via Corsair when research is on or Corsair is configured.
@@ -76,7 +92,7 @@ export async function POST(req: Request) {
     model,
     schema: DeckSchema,
     system: buildSystemPrompt(),
-    prompt: buildUserPrompt(reqData, research, researchMeta),
+    prompt: buildUserPrompt(reqData, research, researchMeta, source),
     temperature: 0.8,
     abortSignal: req.signal,
     onError: (e) => console.error("[generate] stream error", e),

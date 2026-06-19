@@ -27,8 +27,6 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const pdfBase64 = typeof body?.pdfBase64 === "string" ? body.pdfBase64.replace(/^data:[^;]+;base64,/, "") : "";
   const title = (typeof body?.title === "string" && body.title.trim()) || "Untitled deck";
-  const channel = typeof body?.channel === "string" ? body.channel.trim() : "";
-  const note = typeof body?.message === "string" ? body.message.trim() : "";
   if (!pdfBase64) {
     return NextResponse.json({ ok: false, error: "Missing deck PDF." }, { status: 400 });
   }
@@ -59,23 +57,7 @@ export async function POST(req: Request) {
   }
   driveUrl ??= `https://drive.google.com/file/d/${fileId}/view`;
 
-  let slack: { posted: boolean; channel?: string; error?: string } = { posted: false };
-  if (channel) {
-    try {
-      const text =
-        `:bar_chart: *${title}* is ready to view.\n` +
-        (note ? `${note}\n` : "") +
-        `<${driveUrl}|Open the deck>`;
-      const res = await t.run(OPS.slackPost, { channel, text, mrkdwn: true, unfurl_links: false });
-      slack = res.success
-        ? { posted: true, channel }
-        : { posted: false, channel, error: "Slack isn't connected. Use the connect link to authorize Slack." };
-    } catch (e) {
-      slack = { posted: false, channel, error: formatCorsairError(e) };
-    }
-  }
-
-  return NextResponse.json({ ok: true, driveUrl, slack });
+  return NextResponse.json({ ok: true, driveUrl });
 }
 
 function needsAuth(res: { signInLink?: string }, label: string) {

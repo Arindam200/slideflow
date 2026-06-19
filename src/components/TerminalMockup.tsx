@@ -40,7 +40,7 @@ const PANES = [
     lines: [
       { t: "present → fullscreen", c: "text-white/85" },
       { t: "export  → PDF · PPTX", c: "text-body" },
-      { t: "share   → Drive + Slack", c: "text-body" },
+      { t: "share   → Google Drive link", c: "text-body" },
       { t: "", c: "" },
       { t: "via Corsair integrations", c: "text-muted" },
     ],

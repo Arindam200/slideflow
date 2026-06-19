@@ -126,6 +126,8 @@ export type GenerateRequest = {
   themeId: string;
   audience?: string;
   research?: boolean;
+  /** Optional Google Drive/Docs URL (or file id) to ground the deck in, via Corsair. */
+  sourceUrl?: string;
 };
 
 /** Fill layout-specific fields when the model omits them (common mid-stream). */
