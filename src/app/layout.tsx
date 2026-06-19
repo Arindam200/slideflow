@@ -24,7 +24,7 @@ const siteUrl =
 
 const title = "Slideflow: AI decks that stream in as you watch";
 const description =
-  "Describe an idea and watch a beautiful deck appear slide by slide. Research, present, and export, powered by Corsair and Nebius Token Factory.";
+  "Describe an idea and watch a polished deck stream in slide by slide. Present, export, and publish, powered by Corsair.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -38,9 +38,9 @@ export const metadata: Metadata = {
     description,
     images: [
       {
-        url: "/image.png",
-        width: 1920,
-        height: 1080,
+        url: "/og.png",
+        width: 1200,
+        height: 630,
         alt: "Slideflow, an AI presentation studio",
       },
     ],
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title,
     description,
-    images: ["/image.png"],
+    images: ["/og.png"],
   },
 };
 
